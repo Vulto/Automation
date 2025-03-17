@@ -1,0 +1,7 @@
+#!/bin/bash
+
+BROWSER="surf"
+
+ResourceName=`twingate resources | fzf | cut -f 1 -d ' '`
+
+twingate auth $ResourceName | grep -m 1  https | cut -f 6 -d ' ' | xargs $BROWSER &

@@ -1,0 +1,80 @@
+---
+- name: Gather system facts using systemd tools
+  hosts: all
+  become: yes  # Required for some commands that need root privileges
+  tasks:
+    - name: Get hostnamectl information
+      ansible.builtin.command: hostnamectl
+      register: hostnamectl_result
+      changed_when: false
+
+    - name: Get networkctl status for lo
+      ansible.builtin.command: networkctl status lo
+      register: networkctl_lo_result
+      changed_when: false
+
+    - name: Get networkctl status for eth0
+      ansible.builtin.command: networkctl status eth0
+      register: networkctl_eth0_result
+      changed_when: false
+      ignore_errors: yes  # eth0 might not exist on all systems
+
+    - name: Get timedatectl information
+      ansible.builtin.command: timedatectl
+      register: timedatectl_result
+      changed_when: false
+
+    - name: Get open ports using ss
+      ansible.builtin.command: ss -tuln
+      register: open_ports_result
+      changed_when: false
+
+    - name: Get services using open ports
+      ansible.builtin.command: ss -tulnp
+      register: services_ports_result
+      changed_when: false
+
+    - name: Get system uptime
+      ansible.builtin.command: uptime
+      register: uptime_result
+      changed_when: false
+
+    - name: Get CPU information
+      ansible.builtin.command: lscpu
+      register: cpu_result
+      changed_when: false
+
+    - name: Get disk information
+      ansible.builtin.command: lsblk -f
+      register: disk_result
+      changed_when: false
+
+    - name: Display collected facts
+      ansible.builtin.debug:
+        msg: |
+          Hostnamectl:
+          {{ hostnamectl_result.stdout }}
+
+          Networkctl (lo):
+          {{ networkctl_lo_result.stdout }}
+
+          Networkctl (eth0):
+          {{ networkctl_eth0_result.stdout | default('Interface eth0 not found') }}
+
+          Timedatectl:
+          {{ timedatectl_result.stdout }}
+
+          Open Ports:
+          {{ open_ports_result.stdout }}
+
+          Services using Ports:
+          {{ services_ports_result.stdout }}
+
+          Uptime:
+          {{ uptime_result.stdout }}
+
+          CPU Info:
+          {{ cpu_result.stdout }}
+
+          Disk Info:
+          {{ disk_result.stdout }}
