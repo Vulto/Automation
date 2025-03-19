@@ -1,1 +1,0 @@
-mount -t cifs "//10.17.54.54/MFT/FileTransfer/EGE Files" /mnt/fileserver/ -o username=j.sa.admt1,password='U-FgX2Ec!ee3nM'

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Automatic network interface configuration script
+
 # Exit on any error
 set -e
 

@@ -1,0 +1,8 @@
+# Environment variables
+export EDITOR="nvim"
+export VISUAL="$EDITOR"
+export PAGER="less -R"
+export BROWSER="google-chrome"
+export DISPLAY=":0"
+export FZF_DEFAULT_OPTS="--height 30% --layout=reverse --border --pointer='>'"
+export PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin"

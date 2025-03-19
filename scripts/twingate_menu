@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# This script expect resources names with no spaces 
+
+# Change to your own browser (firefox, chrome etc...)
 BROWSER="surf"
 
 ResourceName=`twingate resources | fzf | cut -f 1 -d ' '`
