@@ -1,10 +1,88 @@
 #!/bin/bash
 
-# This script expect resources names with no spaces 
+set -e
 
-# Change to your own browser (firefox, chrome etc...)
+[[ $UID != 0 ]] && echo "This script requires root privilege" && exit
+
+# IMPORTANT!!
+# This script requires resources names with no spaces 
+
+FZF_DEFAULT_OPTS="--tiebreak=length +i --height 30% --layout=reverse --border --pointer='→'" 
+export FZF_DEFAULT_OPTS
+
+user="administrator"
 BROWSER="surf"
 
-ResourceName=`twingate resources | fzf | cut -f 1 -d ' '`
+# -h
+usage() {
+  cat << EOF
 
-twingate auth $ResourceName | grep -m 1  https | cut -f 6 -d ' ' | xargs $BROWSER &
+  Usage: tg  -MODES 
+
+  MODES:
+    -h This help message
+    -s Status 
+    -l List resources
+    -a Authenticate
+    -ssh ssh into the selected resource
+    -n Change network
+EOF
+}
+
+# -l
+listResources() {
+  twingate resources | fzf --prompt="Select a Resource → "
+}
+
+# -a
+Authenticate() {
+  local ResourceName=`twingate resources | fzf | cut -f 1 -d ' '`
+  twingate auth $ResourceName | grep -m 1  "https" | cut -f 6 -d ' ' | xargs -0 $BROWSER 
+}
+
+# -c
+connect() {
+  local host=`listResources | awk '{print $6}'` 
+  ssh $user@$host
+}
+
+# -n
+Network() {
+    DA_networks=("egesolucoes" "egenetbr" "custom")
+    network=$(printf "%s\n" "${DA_networks[@]}" | fzf --prompt="Select Network: ")
+    
+    if [ -n "$network" ]; then
+        if [ "$network" = "custom" ]; then
+            read -p "Enter custom network: " network
+        fi
+        twingate config network "$network" && \
+
+        $BROWSER `twingate status | grep -m 1 https`
+    fi
+    systemctl restart twingate
+}
+
+case "$1" in
+
+  "-h")
+    usage					;;
+
+  "-s")
+    twingate status		;;
+
+  "-l")
+    listResources ;;
+
+  "-a")
+    Authenticate	;;
+
+  "-c")
+    connect				;;
+
+  "-n")
+    Network       ;;
+
+  *)
+    usage					;;
+
+  esac

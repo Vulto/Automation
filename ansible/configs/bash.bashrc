@@ -55,15 +55,12 @@ fi
 # Quick navigation
 cdf() {
     local dir
-    dir=$(locate -r '^/var\|^/etc\|^/usr\|^/sys\|^/root\|^/home' | while read -r d; do
-        if [[ -d "$d" ]] && ls "$d"/* >/dev/null 2>&1; then
-            echo "$d"
-        fi
-    done | fzf --preview 'tree -L 1 {}' --preview-window=right:40%)
-    if [[ -n "$dir" ]]; then
+    dir=$(locate -e -r /home/$USER \| /var \| /etc | fzf --preview 'ls -l {} 2>/dev/null')
+    if [[ -n "$dir" && -d "$dir" && -x "$dir" ]]; then
         builtin cd "$dir"
-        # Reset PS1
-				[[ $UID = 1000 ]] && PS1="\n  \w  \n   → " || PS1="\n \e[1;31m # [ \w ] \e[m \n    "
+        [[ $UID = 1000 ]] && PS1="\n  \w  \n   → " || PS1="\n \e[1;31m # [ \w ] \e[m \n    "
+    elif [[ -n "$dir" ]]; then
+        echo "Error: Cannot access '$dir'."
     fi
 }
 
@@ -95,6 +92,7 @@ alias df="df -h"
 alias du="du -sh"
 alias ..="cd .."
 alias ...="cd ../.."
+alias ip='ip -c'
 
 # \C-? < control+some character
 # \e? < Alt+some character
