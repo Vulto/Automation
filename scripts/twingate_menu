@@ -5,7 +5,13 @@ set -e
 [[ $UID != 0 ]] && echo "This script requires root privilege" && exit
 
 # IMPORTANT!!
-# This script requires resources names with no spaces 
+# This script requires resources names with no spaces for ssh login
+
+# Check for fzf
+if ! command -v fzf >/dev/null 2>&1; then
+  echo -e "\033[31mError: fzf is not installed. Please install it first.\033[0m"
+  exit 1
+fi
 
 FZF_DEFAULT_OPTS="--tiebreak=length +i --height 30% --layout=reverse --border --pointer='→'" 
 export FZF_DEFAULT_OPTS
@@ -40,7 +46,7 @@ Authenticate() {
   twingate auth $ResourceName | grep -m 1  "https" | cut -f 6 -d ' ' | xargs -0 $BROWSER 
 }
 
-# -c
+# -c (TODO: Have a list of usernames matching selected resource)
 connect() {
   local host=`listResources | awk '{print $6}'` 
   ssh $user@$host
@@ -48,41 +54,44 @@ connect() {
 
 # -n
 Network() {
-    DA_networks=("egesolucoes" "egenetbr" "custom")
-    network=$(printf "%s\n" "${DA_networks[@]}" | fzf --prompt="Select Network: ")
-    
-    if [ -n "$network" ]; then
-        if [ "$network" = "custom" ]; then
-            read -p "Enter custom network: " network
-        fi
-        twingate config network "$network" && \
 
-        $BROWSER `twingate status | grep -m 1 https`
+  DA_networks=(
+    "egesolucoes" 
+    "egenetbr" 
+    "custom"
+  )
+
+  local network=$(printf "%s\n" "${DA_networks[@]}" | fzf --prompt="Select Network: ")
+
+  if [ -n "$network" ]; then
+    if [ "$network" = "custom" ]; then
+      read -p "Enter custom network: " network
     fi
-    systemctl restart twingate
+    twingate config network "$network" && \
+
+      $BROWSER `twingate status | grep -m 1 https`
+  fi
+  systemctl restart twingate
+}
+
+# Status command can return a url for authentication
+# if twingate is online and with a network connected
+# but not authenticated yet.
+Status() {
+ local login=`twingate status | grep https`
+  if [ $login == "online" ]; then
+    echo $login
+  else
+    surf $login
+  fi
 }
 
 case "$1" in
-
-  "-h")
-    usage					;;
-
-  "-s")
-    twingate status		;;
-
-  "-l")
-    listResources ;;
-
-  "-a")
-    Authenticate	;;
-
-  "-c")
-    connect				;;
-
-  "-n")
-    Network       ;;
-
-  *)
-    usage					;;
-
-  esac
+  "-h") usage				    ;;
+  "-s") Status	        ;;
+  "-l") listResources   ;;
+  "-a") Authenticate	  ;;
+  "-c") connect				  ;;
+  "-n") Network         ;;
+  *) usage 					    ;;
+esac

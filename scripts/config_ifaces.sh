@@ -2,6 +2,8 @@
 
 # Automatic network interface configuration script
 
+#ip route add default via 192.168.5.254 dev ens224 
+
 # Exit on any error
 set -e
 
